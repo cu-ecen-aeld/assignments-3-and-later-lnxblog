@@ -90,8 +90,8 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
-cp /home/ubuntu/cross-compiler/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/* ./lib
-cp /home/ubuntu/cross-compiler/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/* ./lib64
+cp ../../lib/* ./lib
+cp ../../lib64/* ./lib64
 
 # TODO: Make device nodes
 sudo mknod -m 666 dev/null c 1 3
