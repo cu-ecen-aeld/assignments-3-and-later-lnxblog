@@ -65,7 +65,7 @@ fi
 mkdir -p ${OUTDIR}/rootfs
 cd ${OUTDIR}/rootfs
 mkdir usr bin dev lib64 lib etc proc home sbin sys tmp var
-mkdir -p usr/bin usr/lib usr/sbin var/log
+mkdir -p usr/bin usr/lib usr/sbin var/log home/conf
 
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
@@ -108,7 +108,7 @@ make
 # on the target rootfs
 cd ${OUTDIR}
 cp ../finder.sh rootfs/home
-cp ../conf/username.txt rootfs/home
+cp ../conf/username.txt rootfs/home/conf
 cp ../writer rootfs/home 
 cp ../finder-test.sh rootfs/home
 cp ../autorun-qemu.sh rootfs/home
