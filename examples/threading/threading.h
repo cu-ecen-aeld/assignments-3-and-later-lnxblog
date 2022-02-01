@@ -19,6 +19,9 @@ struct thread_data{
      * Set to true if the thread completed with success, false
      * if an error occurred.
      */
+	    int wait_get;
+    int wait_put;
+    pthread_mutex_t *mutex;
     bool thread_complete_success;
 };
 
