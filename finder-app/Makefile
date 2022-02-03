@@ -5,7 +5,7 @@ ifdef CROSS_COMPILE
 	CC = $(CROSS_COMPILE)gcc
 endif
 
-writer: writer.o
+all: writer.o
 	$(CC) -o writer writer.o
 
 clean:
