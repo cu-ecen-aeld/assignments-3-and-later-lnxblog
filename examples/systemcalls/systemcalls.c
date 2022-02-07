@@ -1,3 +1,10 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <stdbool.h>
 #include "systemcalls.h"
 
 /**
@@ -16,7 +23,9 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success 
  *   or false() if it returned a failure
 */
-
+    int ret = system(cmd);
+    if(ret)
+	    return false;
     return true;
 }
 
@@ -40,9 +49,10 @@ bool do_exec(int count, ...)
     va_start(args, count);
     char * command[count+1];
     int i;
+    
     for(i=0; i<count; i++)
     {
-        command[i] = va_arg(args, char *);
+        command[i] = va_arg(args, char *);	
     }
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
@@ -58,7 +68,40 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *   
 */
+    pid_t child;
+    int status=0;
+    child = fork();
 
+    if(child==0)
+    {
+	if(execv(command[0],command)==-1)
+	{
+		perror("execv failed");
+		exit(-1);
+	}
+    }
+    else if(child>0)
+    {
+	if(waitpid(child,&status,0)==-1)
+	{
+		perror("waitpid failed");
+		return false;
+	}
+	else if(!WIFEXITED(status))
+	{
+		printf("exit status %d\n",WEXITSTATUS(status));
+		return false;
+	}
+	else if(WEXITSTATUS(status)!=0)
+	{
+		return false;
+	}
+    }
+    else
+    {
+	perror("fork failed");
+	return false;
+    }
     va_end(args);
 
     return true;
@@ -92,6 +135,54 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *   
 */
+
+    pid_t child;
+    int status;
+    child=fork();
+
+    if(child > 0)
+    {
+	
+	if(waitpid(child,&status,0)==-1)
+	{
+		perror("waitpid failed");
+		return false;
+	}
+	else if(!WIFEXITED(status))
+	{
+		printf("exit status %d\n",WEXITSTATUS(status));
+		return false;
+	}
+	else if(WEXITSTATUS(status)!=0)
+	{
+		return false;
+	}	
+    }
+    else if(child==0)
+    {
+	    int fd=open(outputfile,O_CREAT|O_WRONLY,0666);
+	    if(fd==-1)
+	    {
+	    	perror("open failed");
+	    	return false;
+	    }
+	    if(dup2(fd,1)==-1)
+	    {
+	    	perror("dup failed");
+	    	return false;
+	    }
+	    if(execv(command[0],command)==-1)
+	    {
+		    perror("execv failed");
+		    exit(-1);
+	    }
+    }
+    else
+    {
+	    perror("fork failed");
+	    return false;
+    }
+	
 
     va_end(args);
     
