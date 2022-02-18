@@ -150,6 +150,17 @@ int main(int argc,char *argv[])
 		}
 		else if(pid>0)
 			exit(0);
+
+		if(setsid()==-1)
+		{
+			perror("setsid failed");
+		}
+		int fd;
+		fd=open("/dev/null",O_RDWR);
+		if(dup2(fd,1)==-1) //stout
+			perror("dup2 failed");
+		if(dup2(fd,2)==-1) //stderr
+			perror("dup2 failed");
 	}
         /* Make it a listening socket ready to accept connection requests */
         if (listen(listenfd,16) < 0)
