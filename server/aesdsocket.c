@@ -102,7 +102,7 @@ void connection_handler(int* arg)
 int main(int argc,char *argv[])
 {
         int listenfd, *connfdp, port, daemonize=0,optval=1;
-        char client[16],c;
+        char client[16];
         void *ret;
         pid_t pid;
 
