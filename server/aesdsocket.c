@@ -36,27 +36,31 @@ void connection_handler(int* arg)
 	while((bytes=recv(connfd,buff,sizeof(buff),0))!=0)
 	{
 		int written=0;
-		char *sop=buff,*eop=NULL;		
-		while(written < bytes)
+		char *sop=buff,*eop=NULL; // store pointer to beginning of buffer		
+		while(written < bytes)	// loop until all bytes are written 
 		{
 			
-			if((eop=strchr(sop,'\n'))>0)
-			{
-				if(packet==NULL)
+			if((eop=strchr(sop,'\n'))>0) // if '\n' found write into file
+			{	
+				if(packet==NULL)			// create packet if not created
 					packet = malloc(eop-sop+1);
-				else
+				else					// resize packet if already created
 					packet = realloc(packet,pkt_length+eop-sop+1);
 					
-	
-				strncpy(packet + pkt_length,sop,eop-sop+1);
-				pkt_length += eop-sop+1;
-				written += eop-sop+1;	
+				if(packet==NULL)
+				{
+					perror("malloc failed");
+					exit(-1);
+				}
+				strncpy(packet + pkt_length,sop,eop-sop+1);	// copy into packet
+				pkt_length += eop-sop+1;			// update packet length
+				written += eop-sop+1;				// update bytes written from buffer
+				sop=eop+1;					// update start to next byte after '\n'
 				
-				sop=eop+1;
 				if(write(fd,packet,pkt_length)==-1)
 					perror("write() failed");
 
-				
+				// read all bytes written into file and send back to sender
 				rd_fd = open("/var/tmp/aesdsocketdata",O_RDONLY);
 				while((rd_bytes=read(rd_fd,rd_buff,sizeof(rd_buff)))!=0)
 				{
@@ -69,32 +73,29 @@ void connection_handler(int* arg)
 				}
 				memset(rd_buff,0,sizeof(rd_buff));
 				close(rd_fd);
-				pkt_length=0;
+				pkt_length=0;	// reset packet length
 				free(packet);
 				packet=NULL;
 			}
-			else
+			else	// no '\n' found in the buffer. continue to write into the packet
 			{
-				if(packet==NULL)
-					packet = malloc(bytes-written);
-				else
+				if(packet==NULL)				// create packet if not created
+					packet = malloc(bytes-written);		// handles case when more bytes follow '\n'
+				else						// resize packet if already created	
 					packet = realloc(packet,pkt_length+bytes);
 				
 				if(packet==NULL)
 				{
 					perror("malloc failed");
 					exit(-1);
-				}
-				
-				
+				}			
+			
 				strncpy(packet + pkt_length,sop,bytes-written);
 				pkt_length += bytes-written;
 				written = bytes;			
 			}
-		}
-		
-		memset(buff,0,sizeof(buff));
-		
+		}		
+		memset(buff,0,sizeof(buff));		
 	}
 	close(fd);
 }
