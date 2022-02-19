@@ -109,13 +109,17 @@ int main(int argc,char *argv[])
         struct sockaddr_in serveraddr;
         struct sockaddr_in clientaddr;
 	socklen_t clientlen=sizeof(struct sockaddr_in);
-
+	if(argc > 1)
+		if(strcmp(argv[1],"-d")==0)
+			daemonize=1;
+	/*
   	while ((c = getopt (argc, argv, "d")) != -1)
     	switch (c)
       	{
       		case 'd': daemonize=1;
       			break;
       	}
+	*/
       
         openlog(NULL,LOG_ODELAY,LOG_USER);
         port=9000;
