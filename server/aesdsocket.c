@@ -32,6 +32,11 @@ void connection_handler(int* arg)
         int fd,rd_fd;
 
         fd = open("/var/tmp/aesdsocketdata",O_RDWR|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
+	if(fd==-1)
+	{
+		perror("open call failed");
+		exit(-1);
+	}
 	
 	while((bytes=recv(connfd,buff,sizeof(buff),0))!=0)
 	{
@@ -62,6 +67,11 @@ void connection_handler(int* arg)
 
 				// read all bytes written into file and send back to sender
 				rd_fd = open("/var/tmp/aesdsocketdata",O_RDONLY);
+				if(fd==-1)
+				{
+					perror("open call failed");
+					exit(-1);
+				}
 				while((rd_bytes=read(rd_fd,rd_buff,sizeof(rd_buff)))!=0)
 				{
 				//	printf("read %d bytes sending %s\n",rd_bytes,rd_buff);
