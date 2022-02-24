@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Werror
+CFLAGS=-Wall -Werror -lpthread -lrt
 
 all:	aesdsocket.o
 	$(CC) -o aesdsocket aesdsocket.o $(CFLAGS)
