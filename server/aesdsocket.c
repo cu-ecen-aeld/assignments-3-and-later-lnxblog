@@ -17,11 +17,8 @@
 int stop_server;
 void sig_handler(int signal)
 {
-
-	//free_threads();
 	stop_server=1;
 	syslog(LOG_INFO,"Caught signal,exiting");
-	//exit(0);
 }
 
 typedef struct{
@@ -81,11 +78,10 @@ void* connection_handler(void *arg)
 				sop=eop+1;					// update start to next byte after '\n'
 				
 				pthread_mutex_lock(&aesdlog.file_lock);
-
 				if(write(fd,packet,pkt_length)==-1)
-					perror("write() failed");
-				
+					perror("write() failed");				
 				pthread_mutex_unlock(&aesdlog.file_lock);
+				
 				// read all bytes written into file and send back to sender
 				rd_fd = open("/var/tmp/aesdsocketdata",O_RDONLY);
 				if(fd==-1)
@@ -149,33 +145,25 @@ void timestamper(union sigval val)
 		perror("open call failed");
 		pthread_exit(NULL);
 	}
+	t = time(NULL);
+	tmp = localtime(&t);
+	if (tmp == NULL) {
+	perror("localtime");
+	pthread_exit(NULL);
+	}
 
-	//while(1)
-	//{
-		t = time(NULL);
-		tmp = localtime(&t);
-		if (tmp == NULL) {
-		perror("localtime");
-		pthread_exit(NULL);
-		}
+	if ((len=strftime(buff, sizeof(buff), "timestamp: %a, %d %b %Y %T %z", tmp)) == 0) {
+	fprintf(stderr, "strftime returned 0");
+	pthread_exit(NULL);
+	}
+	buff[len]='\n';
+	pthread_mutex_lock(&aesdlog.file_lock);
 
-		if ((len=strftime(buff, sizeof(buff), "timestamp: %a, %d %b %Y %T %z", tmp)) == 0) {
-		fprintf(stderr, "strftime returned 0");
-		pthread_exit(NULL);
-		}
-		buff[len]='\n';
-		pthread_mutex_lock(&aesdlog.file_lock);
+	if(write(fd,buff,len+1)==-1)
+		perror("write() failed");
 
-		if(write(fd,buff,len+1)==-1)
-			perror("write() failed");
-					
-		pthread_mutex_unlock(&aesdlog.file_lock);
-		
-		//sleep(10);
-	//}
+	pthread_mutex_unlock(&aesdlog.file_lock);
 	close(fd);
-	
-	
 }
 
 void setup_timer()
@@ -217,21 +205,7 @@ void push(struct tdata *node)
 	node->next=head;
 	head=node;
 }
-
-void check()
-{
-	struct tdata *curr;
-	
-	curr=head;
-	
-	while(curr!=NULL)
-	{
-		//printf("adding tid %d %d\n",curr->tid,curr->complete);
-		curr=curr->next;
-	}
-
-}
-void free_threads()
+void free_threads(int all_threads)
 {
 	struct tdata *curr,*prev;
 	
@@ -239,9 +213,8 @@ void free_threads()
 	prev=head;
 	while(curr!=NULL)
 	{
-		if(curr->complete)
+		if(all_threads || curr->complete)
 		{
-			//printf("freeing tid %d\n",curr->tid);
 			if(curr==head)
 				head = curr->next;
 			else
@@ -262,8 +235,7 @@ void free_threads()
 int main(int argc,char *argv[])
 {
         int listenfd,port, daemonize=0,optval=1;
-        char client[16];
-        
+        char client[16];        
 	pid_t pid;
 	
         struct sockaddr_in serveraddr;
@@ -283,8 +255,7 @@ int main(int argc,char *argv[])
         /* Eliminates "Address already in use" error from bind. */
         if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,(const void *)&optval , sizeof(int)) < 0)
                 return -1;
-
-
+	
         /* listenfd will be an endpoint for all requests to port on any IP address for this host */
         bzero((char *) &serveraddr, sizeof(serveraddr));
         serveraddr.sin_family = AF_INET;
@@ -342,21 +313,17 @@ int main(int argc,char *argv[])
 		perror("signal call failed");
 		return -1;
 	}
-	//pthread_create(&tid1,NULL,timestamper,NULL);
-
 	setup_timer();
 	struct tdata *curr;
         /* begin infinite loop listening for connections */
-       while(1){
+        while(1){
 
 		pthread_t tid;
 		int connfd;
-		
-                //connfdp = malloc(sizeof(int));
+
                 connfd = accept(listenfd, (struct sockaddr*)&clientaddr, &clientlen);
                 if(connfd != -1)
- 		{
-                	
+		{              	
 		        if(inet_ntop(AF_INET,(void*)&clientaddr.sin_addr,client,sizeof(client))==NULL)
 			        perror("inet_ntop failed");
 			        
@@ -364,22 +331,17 @@ int main(int argc,char *argv[])
 		        curr->complete=0;
 		        curr->connfd=connfd; 
 			
-		        //syslog(LOG_INFO,"Accepted connection from %s\n",client);
+		        syslog(LOG_INFO,"Accepted connection from %s\n",client);
 		        pthread_create(&tid, NULL, connection_handler, curr);
-		        //printf("created thread %d\n",tid);
-		        
-		        curr->tid=tid;
-		        
+		        curr->tid=tid;		        
 		        push(curr);
-		 }
-                //check();
+		}
+		free_threads(0);	// free memory for any threads already finished
                 if(stop_server)break;              
         }
         
-        free_threads();
+        free_threads(1); // free memory for all threads 
 	if(unlink("/var/tmp/aesdsocketdata")==-1)
 	perror("unlink failed");
-	
-
  }
  
