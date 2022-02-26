@@ -207,12 +207,13 @@ void push(struct tdata *node)
 }
 void free_threads(int all_threads)
 {
-	struct tdata *curr,*prev;
+	struct tdata *curr,*prev,*tmp;
 	
 	curr=head;
 	prev=head;
 	while(curr!=NULL)
 	{
+		
 		if(all_threads || curr->complete)
 		{
 			if(curr==head)
@@ -223,11 +224,14 @@ void free_threads(int all_threads)
 			}
 			
 			pthread_join(curr->tid,NULL);
-			free(curr);
+			tmp=curr;
+			curr=curr->next;
+			free(tmp);
+			continue;
 		}
 		
 		prev = curr;
-		curr = curr->next;		
+		curr = (struct tdata*)(curr->next);		
 	}
 }
 
@@ -330,7 +334,8 @@ int main(int argc,char *argv[])
 		        curr=malloc(sizeof(struct tdata)); // allocate memory for node    
 		        curr->complete=0;
 		        curr->connfd=connfd; 
-			
+			curr->next=NULL;
+
 		        syslog(LOG_INFO,"Accepted connection from %s\n",client);
 		        pthread_create(&tid, NULL, connection_handler, curr);
 		        curr->tid=tid;		        
