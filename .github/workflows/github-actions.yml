@@ -13,7 +13,7 @@ jobs:
     full-test:
        container: cuaesd/aesd-autotest:assignment7
        runs-on: self-hosted
-        steps:
+       steps:
           - uses: actions/checkout@v2
           - name: Checkout submodules
             run : git submodule update --init --recursive
