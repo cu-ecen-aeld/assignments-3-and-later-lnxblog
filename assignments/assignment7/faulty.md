@@ -1,7 +1,9 @@
-## FAULTY ##
+## FAULTY KERNEL MODULE ##
 
 Null pointer dereference in the kernel module faulty.ko caused the kernel panic.
+
 The pointer dereference has occured in faulty_write file operation function of the kernel module.
+
 The faulty_write is at the top of the call trace which was called by ksys_write.
 
 The kernel panic log:
