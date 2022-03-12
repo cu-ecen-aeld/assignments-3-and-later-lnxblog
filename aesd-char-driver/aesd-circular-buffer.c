@@ -73,7 +73,10 @@ char* aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const 
 	if(buffer->full)
 	{
 		char *to_free;
+		int size;
 		to_free=buffer->entry[buffer->in_offs].buffptr;
+		size=buffer->entry[buffer->in_offs].size;
+		memset(to_free,0,size);
 		buffer->entry[buffer->in_offs].buffptr = add_entry->buffptr;
 		buffer->entry[buffer->in_offs].size = add_entry->size;
 		buffer->out_offs = (buffer->out_offs + 1)%AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;

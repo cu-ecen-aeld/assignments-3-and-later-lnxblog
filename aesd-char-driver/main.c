@@ -70,9 +70,10 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 	
 	source = &entry->buffptr[byte_offset];
 	tx_size = entry->size-byte_offset;
+	PDEBUG("copying %lld bytes to user",tx_size);
 	copy_to_user(buf,source,tx_size);
 	*f_pos += tx_size;
-	retval = count - tx_size;
+	retval = tx_size;
 		 
 	out:
 	mutex_unlock(&aesd_device.cb_mutex);		// release lock
@@ -84,6 +85,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 {
 	struct aesd_buffer_entry *entry = &aesd_device.curr;
 	ssize_t retval = -ENOMEM;
+	char *eop;
 	PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
 	/**
 	 * TODO: handle write
@@ -104,7 +106,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	 		goto out;
 	 	//entry->size += count;
 	 }
-	 
+	 memset(entry->buffptr+entry->size,0,count);
 	 if(copy_from_user(entry->buffptr+entry->size,buf,count))
 	 {
 		goto out;
@@ -113,6 +115,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	 retval = count;
 	 if(strchr(entry->buffptr,'\n'))
 	 {
+		 PDEBUG("found EOF at offset %d FINISH WRITE. string %s",eop-entry->buffptr,entry->buffptr);
 	 	char *free_me;
 	 	free_me=aesd_circular_buffer_add_entry(&aesd_device.cbuffer,entry);
 	 	if(free_me)
@@ -170,9 +173,10 @@ int aesd_init_module(void)
 	 * TODO: initialize the AESD specific portion of the device
 	 */
 	mutex_init(&aesd_device.cb_mutex);
-	aesd_device.cbuffer.in_offs=0;
-	aesd_device.cbuffer.out_offs=0;
-	aesd_device.cbuffer.full=0;
+	aesd_circular_buffer_init(&aesd_device.cbuffer);
+	//aesd_device.cbuffer.in_offs=0;
+	//aesd_device.cbuffer.out_offs=0;
+	//aesd_device.cbuffer.full=0;
 	aesd_device.curr.buffptr=0;
 	result = aesd_setup_cdev(&aesd_device);
 

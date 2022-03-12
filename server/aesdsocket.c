@@ -324,7 +324,9 @@ int main(int argc,char *argv[])
 		perror("signal call failed");
 		return -1;
 	}
-	setup_timer();
+	#if USE_AESD_CHAR_DEVICE==0
+		setup_timer();
+	#endif
 	struct tdata *curr;
         /* begin infinite loop listening for connections */
         while(1){
