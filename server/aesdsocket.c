@@ -90,7 +90,7 @@ void* connection_handler(void *arg)
 				pthread_mutex_unlock(&aesdlog.file_lock);
 				
 				// read all bytes written into file and send back to sender
-				rd_fd = open("/var/tmp/aesdsocketdata",O_RDONLY);
+				rd_fd = open(aesdlog.file,O_RDONLY);
 				if(fd==-1)
 				{
 					perror("open call failed");
