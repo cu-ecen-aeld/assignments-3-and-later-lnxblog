@@ -9,7 +9,7 @@ ifeq ($(LDFLAGS),)
 endif
 
 all:	aesdsocket.o
-	$(CC) -o aesdsocket aesdsocket.o $(CFLAGS) $(LDFLAGS)
+	$(CC) -o aesdsocket aesdsocket.o $(CFLAGS) -lpthread -lrt
 
 clean:
 	rm -rf *.o

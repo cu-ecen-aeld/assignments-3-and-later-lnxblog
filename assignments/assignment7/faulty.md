@@ -1,8 +1,13 @@
-## FAULTY ##
+## FAULTY KERNEL MODULE ##
 
 Null pointer dereference in the kernel module faulty.ko caused the kernel panic.
+
 The pointer dereference has occured in faulty_write file operation function of the kernel module.
 
+The faulty_write is at the top of the call trace which was called by ksys_write.
+
+The kernel panic log:
+```
 Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000
 Mem abort info:
   ESR = 0x96000046
@@ -48,5 +53,6 @@ Call trace:
  el0_sync+0x174/0x180
 Code: d2800001 d2800000 d503233f d50323bf (b900003f) 
 ---[ end trace e4d15e1f1351f0bb ]---
+```
 
 

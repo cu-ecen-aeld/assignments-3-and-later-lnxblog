@@ -14,6 +14,13 @@
 #include <pthread.h>
 #include <errno.h>
 
+#define USE_AESD_CHAR_DEVICE 1
+
+#if USE_AESD_CHAR_DEVICE==1
+	#define FILE_LOG "/dev/aesdchar"
+#else
+	#define FILE_LOG "/var/tamp/aesdsocketdata"
+#endif
 int stop_server;
 void sig_handler(int signal)
 {
@@ -26,7 +33,7 @@ typedef struct{
 	pthread_mutex_t file_lock;
 }file_access;
 
-file_access aesdlog = {.file="/var/tmp/aesdsocketdata"};
+file_access aesdlog = {.file=FILE_LOG};
 
 struct tdata{
 	pthread_t tid;
@@ -83,7 +90,7 @@ void* connection_handler(void *arg)
 				pthread_mutex_unlock(&aesdlog.file_lock);
 				
 				// read all bytes written into file and send back to sender
-				rd_fd = open("/var/tmp/aesdsocketdata",O_RDONLY);
+				rd_fd = open(aesdlog.file,O_RDONLY);
 				if(fd==-1)
 				{
 					perror("open call failed");
@@ -317,7 +324,9 @@ int main(int argc,char *argv[])
 		perror("signal call failed");
 		return -1;
 	}
-	setup_timer();
+	#if USE_AESD_CHAR_DEVICE==0
+		setup_timer();
+	#endif
 	struct tdata *curr;
         /* begin infinite loop listening for connections */
         while(1){
